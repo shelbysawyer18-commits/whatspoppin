@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Privacy information for What's Poppin?, a fan-made movie rating card site." />
+    <title>Privacy — What's Poppin?</title>
+    <link rel="stylesheet" href="/legal/legal.css" />
+  </head>
+  <body>
+    <main class="legal-shell">
+      <nav class="nav-row" aria-label="Site">
+        <a href="/">What's Poppin?</a>
+        <a class="is-on" href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </nav>
+      <article class="legal-ticket">
+        <p class="eyebrow">What's Poppin?</p>
+        <h1>Privacy</h1>
+        <p>
+          What's Poppin? is a fan-made movie rating card site. It is not a corporate product page and is not
+          affiliated with theatre chains, studios, or The Movie Database (TMDB) as a partner.
+        </p>
+
+        <h2>Sign-in</h2>
+        <p>When cloud sign-in is enabled, you can use:</p>
+        <ul>
+          <li>Email magic link (one-tap sign-in; no password collected by this app)</li>
+          <li>Google sign-in for identity, when that option is turned on</li>
+          <li>X sign-in for identity, when that option is turned on</li>
+        </ul>
+        <p>
+          Google sign-in is requested only for basic identity: OpenID, public profile, and verified email.
+          This site does not ask for your Google password, payment card, private Gmail, Drive, or feed content.
+          X OAuth, when enabled, is likewise used for identity through the auth provider. An X / Twitter
+          username typed into your profile is a display handle only — it is not a verified X login.
+        </p>
+        <p>
+          Authentication is handled by Supabase Auth. This app's own code does not store OAuth provider
+          access tokens from the client auth session.
+        </p>
+
+        <h2>What we store</h2>
+        <ul>
+          <li>Account id from the auth provider (your signed-in user id)</li>
+          <li>Email associated with magic-link or OAuth identity (held by Auth)</li>
+          <li>Optional profile username / display handle you choose</li>
+          <li>Optional avatar image you upload</li>
+          <li>Favorites and Not for me snack/drink tags</li>
+          <li>Review card content you save (movie selection, bags, candy, drink, three words, optional photo)</li>
+          <li>Technical session / account metadata needed to keep you signed in</li>
+        </ul>
+
+        <h2>On this device</h2>
+        <p>
+          Profile preferences and card drafts may be saved in this browser's local storage so the site works
+          offline or before you sign in. The auth client also persists a session in the browser so you stay
+          signed in across visits. Clearing site data in your browser removes that local copy.
+        </p>
+
+        <h2>Third parties used by the service</h2>
+        <ul>
+          <li>Supabase — authentication and cloud profile/card storage</li>
+          <li>TMDB — movie search and poster images already used by the card builder</li>
+          <li>Vercel — hosting this site</li>
+          <li>X — only when you choose to open or share a post there</li>
+        </ul>
+        <p>
+          This site does not sell personal information and does not run separate advertising or marketing
+          trackers in its own code.
+        </p>
+
+        <h2>Account and data removal</h2>
+        <p>
+          While signed in, open <strong>Your profile</strong> and use <strong>Account &amp; data</strong> to
+          delete your account. That removes your auth user and cascaded cloud profile/card rows, and removes
+          profile photos stored for your account. You can also sign out, or clear this site's data in your
+          browser to remove local drafts and preferences on this device.
+        </p>
+        <p>
+          A separate public contact inbox for account requests is not published on this page. Use the
+          in-app delete control when signed in.
+        </p>
+
+        <p class="note">
+          This page describes how What's Poppin? works today. It is not a guarantee about retention length,
+          legal classification, or certifications.
+        </p>
+      </article>
+    </main>
+  </body>
+</html>

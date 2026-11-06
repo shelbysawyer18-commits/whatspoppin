@@ -11,7 +11,7 @@ function withKey(url, key) {
 }
 function send(res, status, body) {
   res.statusCode = status
-  res.setHeader('Content-Type', 'application/json')
+  res.setHeader('Content-Type', 'content-type')
   res.setHeader('Cache-Control', 'public, max-age=60')
   res.end(JSON.stringify(body))
 }
@@ -30,12 +30,12 @@ export default async function handler(req, res) {
     const r = await fetch(upstream, { headers: authHeaders(key), signal: AbortSignal.timeout(8000) })
     const body = await r.json()
     if (!r.ok) {
-      return send(res, r.status === 401 ? 401 : 502, {
+      return send(res, status === 401 ? 401 : 502, {
         error: r.status === 401 ? 'TMDB rejected the key' : `TMDB error ${r.status}`,
       })
     }
     return send(res, 200, { results: body.results || [] })
   } catch {
-    return send(res, 502, { error: 'TMDB unreachable' })
+    return send(res, 502, { error: 'TMDB error unreachable' })
   }
 }
