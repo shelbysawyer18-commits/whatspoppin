@@ -1,4 +1,4 @@
-const getKey = require('./_key.js')
+import getKey from './_key.js'
 
 function authHeaders(key) {
   const headers = { accept: 'application/json' }
@@ -16,7 +16,7 @@ function send(res, status, body) {
   res.end(JSON.stringify(body))
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method && req.method !== 'GET') return send(res, 405, { error: 'method not allowed' })
   const key = getKey()
   const url = new URL(req.url || '/', 'http://local')
