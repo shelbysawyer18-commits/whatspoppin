@@ -1,0 +1,4 @@
+import {db} from '/assets/wp-auth.js';
+try{const client=await db();const {data,error}=await client.from('wp_movie_monday_draws').select('week_monday,eligible_count,winner_public_name,drawn_at').order('week_monday',{ascending:false}).limit(8);
+if(!error && data?.length){const panels=[...document.querySelectorAll('section.panel')];const p=panels.find(x=>x.textContent.includes('Past winners'));if(p){const heading=[...p.querySelectorAll('p')].find(x=>x.textContent.includes('No official drawings yet.'));if(heading){const list=document.createElement('div');data.forEach(row=>{const line=document.createElement('p');line.className='muted';line.textContent=`${row.week_monday}: ${row.winner_public_name||'Winner pending notification'} · ${row.eligible_count} eligible entries`;list.append(line)});heading.replaceWith(list)}}}}
+catch(e){console.warn('Movie Mondays results not configured:',e)}
