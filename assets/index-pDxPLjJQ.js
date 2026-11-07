@@ -41,6 +41,35 @@ img.removeAttribute(`srcset`);img.setAttribute(`loading`,`eager`);img.src=item.d
 }
 await deadline(Promise.all(changed.map(({img})=>img.decode?img.decode():new Promise((resolve,reject)=>{if(img.complete&&img.naturalWidth)return resolve();img.onload=resolve;img.onerror=()=>reject(Error(`Could not decode a card image.`));}))),10000,`Decoding card images`);
 let png=await deadline($t(card,{cacheBust:!1,pixelRatio:2,width:960,height:600,style:{transform:`none`,width:`960px`,height:`600px`},backgroundColor:`#f4ead7`}),30000,`Rendering the PNG`);
+
+// Some iOS SVG/foreignObject exports omit the poster despite its on-screen image loading.
+// Composite the already-loaded hero image onto the PNG with Canvas, preserving its cover/contain crop.
+{
+const hero=card.querySelector(`.hero`),poster=hero?.querySelector(`img`);
+if(hero&&poster&&poster.complete&&poster.naturalWidth>0){
+try{
+const loadImage=(src)=>new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(Error(`Image decode failed`));image.src=src;});
+const [cardImage,posterImage]=await deadline(Promise.all([loadImage(png),loadImage(poster.currentSrc||poster.src)]),9000,`Preparing movie poster`);
+const canvas=document.createElement(`canvas`);canvas.width=cardImage.naturalWidth;canvas.height=cardImage.naturalHeight;
+const ctx=canvas.getContext(`2d`);
+if(ctx){
+ctx.drawImage(cardImage,0,0);
+const parent=card.getBoundingClientRect(),frame=hero.getBoundingClientRect(),bounds=poster.getBoundingClientRect();
+const factorX=canvas.width/960,factorY=canvas.height/600;
+const x=(bounds.left-parent.left)*factorX,y=(bounds.top-parent.top)*factorY,w=bounds.width*factorX,h=bounds.height*factorY;
+const clipX=(frame.left-parent.left)*factorX,clipY=(frame.top-parent.top)*factorY;
+ctx.save();ctx.beginPath();ctx.rect(clipX,clipY,frame.width*factorX,frame.height*factorY);ctx.clip();
+const fit=getComputedStyle(poster).objectFit||`fill`;
+if(fit===`cover`||fit===`contain`){
+const ratio=fit===`cover`?Math.max(w/posterImage.width,h/posterImage.height):Math.min(w/posterImage.width,h/posterImage.height);
+const drawW=posterImage.width*ratio,drawH=posterImage.height*ratio;
+ctx.drawImage(posterImage,x+(w-drawW)/2,y+(h-drawH)/2,drawW,drawH);
+}else{ctx.drawImage(posterImage,x,y,w,h);}
+ctx.restore();png=canvas.toDataURL(`image/png`);
+}
+}catch(error){console.warn(`Poster PNG composite could not complete; using normal export`,error);}
+}
+}
 let fileName=`whats-poppin-${(t.movie?.title||`card`).toLowerCase().replace(/\s+/g,`-`)}.png`;
 if(!mobile&&!viewOnly){let link=document.createElement(`a`);link.href=png;link.download=fileName;document.body.appendChild(link);link.click();link.remove();ge(`PNG download started.`);return;}
 // On iPhone an asynchronous popup/navigation can stay at about:blank. Show the image in-page instead.
