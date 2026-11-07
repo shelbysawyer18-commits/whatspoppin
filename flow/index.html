@@ -18,7 +18,7 @@ main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding-bottom:44px}.intr
  .word:active{color:var(--red)!important}
 }
 @media(prefers-reduced-motion:reduce){.word{transition:none}}
-</style></head><body><header><a href="/" class="brand">what's <em>poppin?</em></a><nav class="nav"><a href="/#create">Create</a><a href="/#profile">Profile</a><a href="/flow/" class="active">Flow</a></nav></header><main>
+</style></head><body><header><a href="/" class="brand">what's <em>poppin?</em></a><nav class="nav"><a href="/#create">Create</a><a href="/account/">Profile</a><a href="/flow/" class="active">Flow</a><a href="/friends/">Friends</a></nav></header><main>
 <section class="view on" id="universe"><div class="intro"><div><div class="kicker">DISCOVER</div><h1>Flow.</h1><p>Explore the words people use in real movie reviews.</p></div><div class="toolbar"><button id="minus" aria-label="Zoom out">−</button><button id="plus" aria-label="Zoom in">+</button><button id="reset">Recenter</button></div></div><div class="space-wrap"><div class="space" id="space" aria-label="Interactive word universe"><div class="center" id="center"></div><div class="index">EXPLORE / 01</div><div class="info">DRAG TO EXPLORE · TAP A WORD</div></div></div><div class="footnote" id="communityStatus" role="status" aria-live="polite">Loading community words…</div></section>
 <section class="view" id="results"><div class="inner"><button class="back" id="backWords">← All words</button><div class="count" id="matchCount"></div><h2 id="resultWord"></h2><p class="note">Actual review cards made by the community using this word.</p><div class="grid" id="filmGrid"></div><p class="status" id="filmStatus" aria-live="polite"></p></div></section>
 <section class="view" id="movie"><div class="inner"><button class="back" id="backMovies">← Back to review cards</button><div id="movieDetail"></div></div></section>
@@ -48,7 +48,7 @@ const $=id=>document.getElementById(id),space=$('space'),center=$('center');
 const show=id=>{for(const v of ['universe','results','movie'])$(v).classList.toggle('on',v===id);window.scrollTo(0,0)};
 const camera={x:0,y:0,z:1};let chosen='',active=null,drag=null,suppress=false;let touches=new Map(),pinch=null;
 const palette=['#171412','#c4282b','#3d3832','#2f7f86','#745f35'];
-let words=seeds.map(([name,sz,x,y,depth],i)=>{let b=document.createElement('button');b.className='word';b.textContent=name;b.type='button';b.style.fontSize=sz+'px';b.title=entry.count+' published '+(entry.count===1?'review':'reviews')+' use this word';b.style.color=palette[i%palette.length];b.style.fontWeight=sz>65?'800':'660';b.addEventListener('click',()=>{if(!suppress)openWord(name)});center.append(b);return{el:b,x,y,depth}});
+let words=[]; // Live community entries arrive from /flow/community.js.
 // Organic, measured mobile constellation. Every position is deterministic:
 // no random jumping after a resize, and no fake ratings or generated art.
 let mobileLayout=[];let mobileWidth=0;let mobileHeight=0;
@@ -58,7 +58,7 @@ function layoutMobile(){
  mobileWidth=width;mobileHeight=height;
  const entries=words.map((word,i)=>{
    // Keep personality in the typography without swallowing the mobile canvas.
-   const font=Math.max(20,Math.min(37,Math.round(seeds[i][1]*.48)));
+   const font=Math.max(20,Math.min(46,Math.round(seeds[i][1]*.53)));
    word.el.style.fontSize=font+'px';
    const w=Math.ceil(word.el.offsetWidth),h=Math.ceil(word.el.offsetHeight);
    return{el:word.el,w,h,i};
@@ -105,12 +105,12 @@ window.wpFlowSetWords=function(counts){
    const x=old?.x??Math.cos(i*spiral)*radius;
    const y=old?.y??Math.sin(i*spiral)*radius;
    const depth=old?.depth??0;
-   const size=Math.min(96,Math.max(22,23+Math.log2(Math.max(1,Number(entry.count)))*18));
+   const size=Math.min(106,Math.max(24,24+Math.log2(Math.max(1,Number(entry.count)))*19));
    return[name,size,x,y,depth];
  });
  words=seeds.map(([name,sz,x,y,depth],i)=>{
    const b=document.createElement('button');b.className='word';b.type='button';b.textContent=name;
-   b.style.fontSize=sz+'px';b.style.color=palette[i%palette.length];
+   b.style.fontSize=sz+'px';b.style.color=palette[i%palette.length];b.title=(normalized[i]?.count||0)+' published reviews use this word';
    b.addEventListener('click',()=>{if(!suppress)window.wpFlowOpenCommunity?.(name)});
    center.appendChild(b);return{el:b,x,y,depth};
  });
