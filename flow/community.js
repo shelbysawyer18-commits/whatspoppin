@@ -5,7 +5,6 @@ const $ = id => document.getElementById(id);
 const status = $('communityStatus');
 let reviews = [];
 let chosenWord = '';
-const posterCache = new Map();
 
 const normalize = value => String(value ?? '').trim().toLocaleLowerCase('en-US');
 const wordsFor = review => [...new Set((Array.isArray(review.words) ? review.words : [])
@@ -64,59 +63,46 @@ function movieGroups(word) {
   }
   return [...groups.values()].sort((a,b) => b.items.length - a.items.length || a.title.localeCompare(b.title));
 }
-async function posterFor(movie) {
-  const key = String(movie.tmdbId || normalize(movie.title));
-  if (posterCache.has(key)) return posterCache.get(key);
-  const promise = (async () => {
-    try {
-      const response = await fetch('/api/tmdb/search?q=' + encodeURIComponent(movie.title));
-      if (!response.ok) return null;
-      const data = await response.json();
-      const candidates = Array.isArray(data.results) ? data.results : [];
-      const match = candidates.find(f => Number(f.id ?? f.tmdbId) === Number(movie.tmdbId))
-        || candidates.find(f => normalize(f.title || f.original_title) === normalize(movie.title));
-      const value = match?.poster_path || match?.posterPath;
-      if (!value || typeof value !== 'string') return null;
-      if (value.startsWith('/api/') || value.startsWith('/posters/')) return value;
-      if (/^https:\/\/image\.tmdb\.org\//.test(value)) return value;
-      if (!value.startsWith('/')) return null;
-      return '/api/tmdb/image?path=' + encodeURIComponent(value) + '&size=w500';
-    } catch (err) { console.warn('Flow poster lookup failed', err); return null; }
-  })();
-  posterCache.set(key,promise);
-  return promise;
-}
-function makePoster(movie) {
-  const frame = element('div', 'image');
-  const label = element('span', 'missing', 'Loading poster…');
-  frame.append(label);
-  posterFor(movie).then(src => {
-    if (!frame.isConnected) return;
-    if (!src) { label.textContent = 'Poster unavailable'; return; }
-    const img = new Image();
-    img.alt = `${movie.title} movie poster`;
-    img.onload = () => frame.replaceChildren(img);
-    img.onerror = () => { label.textContent = 'Poster unavailable'; };
-    img.src = src;
-  });
+// The actual exported What's Poppin? review PNG is the artwork for each result.
+// Never substitute TMDB posters or fabricated artwork.
+function makeReviewImage(review) {
+  const frame = element('div', 'flow-review-preview');
+  const src = safeImageUrl(review.card_path);
+  if (!src) {
+    frame.append(element('span', 'missing', 'Review image unavailable'));
+    return frame;
+  }
+  const img = new Image();
+  img.alt = `Review card for ${review.movie_title}`;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  img.addEventListener('error', () => frame.replaceChildren(element('span', 'missing', 'Review image unavailable')));
+  img.src = src;
+  frame.append(img);
   return frame;
 }
 window.wpFlowOpenCommunity = function(rawWord) {
   const word = normalize(rawWord);
   chosenWord = word;
-  const matches = movieGroups(word);
+  const matches = reviews.filter(review => wordsFor(review).includes(word));
   $('resultWord').textContent = word;
-  $('matchCount').textContent = `${matches.length} reviewed ${matches.length === 1 ? 'movie' : 'movies'}`;
-  $('filmStatus').textContent = matches.length ? '' : 'No published reviews for this word yet.';
+  $('matchCount').textContent = `${matches.length} ${matches.length === 1 ? 'review card' : 'review cards'}`;
+  $('filmStatus').textContent = matches.length ? '' : 'No published review cards for this word yet.';
   const grid = $('filmGrid');
   grid.replaceChildren();
-  for (const movie of matches) {
-    const card = element('button', 'film');
+  for (const review of matches) {
+    const card = element('button', 'film flow-review-result');
     card.type = 'button';
-    card.append(makePoster(movie));
-    card.append(element('h3', '', movie.title));
-    card.append(element('small', '', `${movie.items.length} ${movie.items.length === 1 ? 'review' : 'reviews'} · View cards`));
-    card.addEventListener('click', () => openMovie(movie));
+    card.setAttribute('aria-label', `View community reviews for ${review.movie_title}`);
+    card.append(makeReviewImage(review));
+    card.append(element('h3', '', review.movie_title));
+    const subtitle = Number.isInteger(review.score) ? `${review.score}/5 bags · View reviews` : 'View reviews';
+    card.append(element('small', '', subtitle));
+    card.addEventListener('click', () => {
+      // Keep the existing movie detail view: it shows all saved reviews for this film.
+      const group = movieGroups(word).find(group => group.items.some(item => item.id === review.id));
+      if (group) openMovie(group);
+    });
     grid.append(card);
   }
   show('results');
@@ -152,6 +138,6 @@ function openMovie(movie) {
 }
 // Keep rendering in the same Flow screens; no overlay covering site navigation.
 const css = document.createElement('style');
-css.textContent = `.flow-card-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;margin-top:25px}.flow-real-card{min-width:0;border:1.5px solid #171412;background:#fff8ea;padding:12px;box-shadow:4px 4px 0 #17141213}.flow-real-card img{display:block;width:100%;height:auto;aspect-ratio:8/5;object-fit:contain;background:#f3ead8}.flow-real-meta{display:flex;gap:12px;justify-content:space-between;color:#6b6258;margin-top:10px;font-size:12px}.flow-community-details h2{font-family:Arial Black,sans-serif;font-size:clamp(27px,5vw,48px);margin:12px 0}`;
+css.textContent = `.flow-review-result{min-width:0}.flow-review-preview{width:100%;aspect-ratio:8/5;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1.5px solid #171412;background:#fff8ea;box-shadow:3px 4px 0 #17141216}.flow-review-preview img{display:block;width:100%;height:100%;object-fit:contain}.flow-review-result:hover .flow-review-preview,.flow-review-result:focus-visible .flow-review-preview{border-color:#c4282b}.flow-review-preview .missing{font-size:12px;color:#6b6258;text-align:center;padding:10px}.flow-card-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:20px;margin-top:25px}.flow-real-card{min-width:0;border:1.5px solid #171412;background:#fff8ea;padding:12px;box-shadow:4px 4px 0 #17141213}.flow-real-card img{display:block;width:100%;height:auto;aspect-ratio:8/5;object-fit:contain;background:#f3ead8}.flow-real-meta{display:flex;gap:12px;justify-content:space-between;color:#6b6258;margin-top:10px;font-size:12px}.flow-community-details h2{font-family:Arial Black,sans-serif;font-size:clamp(27px,5vw,48px);margin:12px 0}`;
 document.head.append(css);
 loadReviews();
