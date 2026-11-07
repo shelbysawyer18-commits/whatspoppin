@@ -19,8 +19,8 @@ main{width:min(1180px,calc(100% - 28px));margin:0 auto;padding-bottom:44px}.intr
 }
 @media(prefers-reduced-motion:reduce){.word{transition:none}}
 </style></head><body><header><a href="/" class="brand">what's <em>poppin?</em></a><nav class="nav"><a href="/#create">Create</a><a href="/#profile">Profile</a><a href="/flow/" class="active">Flow</a></nav></header><main>
-<section class="view on" id="universe"><div class="intro"><div><div class="kicker">DISCOVER</div><h1>Flow.</h1><p>Pick a word. Find a film.</p></div><div class="toolbar"><button id="minus" aria-label="Zoom out">−</button><button id="plus" aria-label="Zoom in">+</button><button id="reset">Recenter</button></div></div><div class="space-wrap"><div class="space" id="space" aria-label="Interactive word universe"><div class="center" id="center"></div><div class="index">EXPLORE / 01</div><div class="info">DRAG TO EXPLORE · TAP A WORD</div></div></div><div class="footnote"></div></section>
-<section class="view" id="results"><div class="inner"><button class="back" id="backWords">← All words</button><div class="count" id="matchCount"></div><h2 id="resultWord"></h2><p class="note">A few films for this mood.</p><div class="grid" id="filmGrid"></div><p class="status" id="filmStatus" aria-live="polite"></p></div></section>
+<section class="view on" id="universe"><div class="intro"><div><div class="kicker">DISCOVER</div><h1>Flow.</h1><p>Explore the words people use in real movie reviews.</p></div><div class="toolbar"><button id="minus" aria-label="Zoom out">−</button><button id="plus" aria-label="Zoom in">+</button><button id="reset">Recenter</button></div></div><div class="space-wrap"><div class="space" id="space" aria-label="Interactive word universe"><div class="center" id="center"></div><div class="index">EXPLORE / 01</div><div class="info">DRAG TO EXPLORE · TAP A WORD</div></div></div><div class="footnote" id="communityStatus" role="status" aria-live="polite">Loading community words…</div></section>
+<section class="view" id="results"><div class="inner"><button class="back" id="backWords">← All words</button><div class="count" id="matchCount"></div><h2 id="resultWord"></h2><p class="note">Movies reviewed by the community using this word.</p><div class="grid" id="filmGrid"></div><p class="status" id="filmStatus" aria-live="polite"></p></div></section>
 <section class="view" id="movie"><div class="inner"><button class="back" id="backMovies">← Back to films</button><div id="movieDetail"></div></div></section>
 </main><script>
 (()=>{
@@ -43,12 +43,12 @@ const films=[
  {id:38,title:'Eternal Sunshine of the Spotless Mind',year:2004,words:['heartbreaking','beautiful','dreamlike','nostalgic','melancholy']},
  {id:965150,title:'Aftersun',year:2022,words:['heartbreaking','quiet','tender','nostalgic','raw']}
 ];
-const seeds=[['intense',82,12,7,80],['beautiful',71,-320,-103,-35],['chaotic',68,340,-120,25],['nostalgic',55,-130,200,12],['unsettling',67,460,168,-40],['heartbreaking',52,-500,130,-70],['dreamlike',43,570,-320,-95],['obsessive',39,-600,-240,36],['funny',49,35,-300,-90],['haunting',44,780,0,75],['tender',28,-860,330,15],['surreal',42,205,410,-75],['anxious',38,830,400,-45],['electric',36,-970,-95,-65],['melancholy',30,1050,-210,-80],['gritty',28,-335,525,52],['hypnotic',30,1185,180,40],['visceral',28,-1000,-450,-40],['hopeful',30,460,610,35],['unpredictable',33,-750,570,-100],['warm',31,100,-530,25],['dizzying',25,1260,530,-70],['quiet',29,-1240,170,10],['raw',31,-115,-640,30],['strange',31,760,-620,-25],['magnetic',24,-1260,590,45]];
+let seeds=[['intense',82,12,7,80],['beautiful',71,-320,-103,-35],['chaotic',68,340,-120,25],['nostalgic',55,-130,200,12],['unsettling',67,460,168,-40],['heartbreaking',52,-500,130,-70],['dreamlike',43,570,-320,-95],['obsessive',39,-600,-240,36],['funny',49,35,-300,-90],['haunting',44,780,0,75],['tender',28,-860,330,15],['surreal',42,205,410,-75],['anxious',38,830,400,-45],['electric',36,-970,-95,-65],['melancholy',30,1050,-210,-80],['gritty',28,-335,525,52],['hypnotic',30,1185,180,40],['visceral',28,-1000,-450,-40],['hopeful',30,460,610,35],['unpredictable',33,-750,570,-100],['warm',31,100,-530,25],['dizzying',25,1260,530,-70],['quiet',29,-1240,170,10],['raw',31,-115,-640,30],['strange',31,760,-620,-25],['magnetic',24,-1260,590,45]];
 const $=id=>document.getElementById(id),space=$('space'),center=$('center');
 const show=id=>{for(const v of ['universe','results','movie'])$(v).classList.toggle('on',v===id);window.scrollTo(0,0)};
 const camera={x:0,y:0,z:1};let chosen='',active=null,drag=null,suppress=false;let touches=new Map(),pinch=null;
 const palette=['#171412','#c4282b','#3d3832','#2f7f86','#745f35'];
-const words=seeds.map(([name,sz,x,y,depth],i)=>{let b=document.createElement('button');b.className='word';b.textContent=name;b.type='button';b.style.fontSize=sz+'px';b.style.color=palette[i%palette.length];b.style.fontWeight=sz>65?'800':'660';b.addEventListener('click',()=>{if(!suppress)openWord(name)});center.append(b);return{el:b,x,y,depth}});
+let words=seeds.map(([name,sz,x,y,depth],i)=>{let b=document.createElement('button');b.className='word';b.textContent=name;b.type='button';b.style.fontSize=sz+'px';b.style.color=palette[i%palette.length];b.style.fontWeight=sz>65?'800':'660';b.addEventListener('click',()=>{if(!suppress)openWord(name)});center.append(b);return{el:b,x,y,depth}});
 // Organic, measured mobile constellation. Every position is deterministic:
 // no random jumping after a resize, and no fake ratings or generated art.
 let mobileLayout=[];let mobileWidth=0;let mobileHeight=0;
@@ -91,6 +91,32 @@ function layoutMobile(){
    mobileLayout.push({el:item.el,x:chosen.x,y:chosen.y});
  }
 }
+// Used only by the community integration. Keeps the original drag/pinch renderer.
+window.wpFlowSetWords=function(counts){
+ if(!Array.isArray(counts))return;
+ const previous=new Map(seeds.map(([name,sz,x,y,depth])=>[name,{sz,x,y,depth}]));
+ const spiral=2.399963229728653;
+ const normalized=counts.filter(row=>typeof row.word==='string'&&Number(row.count)>0).slice(0,80);
+ for(const w of words)w.el.remove();
+ seeds=normalized.map((entry,i)=>{
+   const name=entry.word;
+   const old=previous.get(name);
+   const radius=85+Math.sqrt(i+1)*125;
+   const x=old?.x??Math.cos(i*spiral)*radius;
+   const y=old?.y??Math.sin(i*spiral)*radius;
+   const depth=old?.depth??0;
+   const size=Math.min(76,Math.max(22,24+Math.log2(Number(entry.count)+1)*11));
+   return[name,size,x,y,depth];
+ });
+ words=seeds.map(([name,sz,x,y,depth],i)=>{
+   const b=document.createElement('button');b.className='word';b.type='button';b.textContent=name;
+   b.style.fontSize=sz+'px';b.style.color=palette[i%palette.length];
+   b.addEventListener('click',()=>{if(!suppress)window.wpFlowOpenCommunity?.(name)});
+   center.appendChild(b);return{el:b,x,y,depth};
+ });
+ mobileWidth=mobileHeight=0;mobileLayout=[];camera.x=0;camera.y=0;camera.z=1;draw();
+};
+window.wpFlowShow=function(id){show(id)};
 function draw(){
  if(window.matchMedia('(max-width:650px)').matches){
    layoutMobile();
