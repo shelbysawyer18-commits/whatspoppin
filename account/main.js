@@ -9,7 +9,7 @@ function status(id,message){$(id).textContent=message}
 function renderSnacks(){ $('snacks').replaceChildren();snackNames.forEach(s=>{const b=document.createElement('button');b.type='button';b.textContent=s;b.classList.toggle('on',picked.has(s));b.setAttribute('aria-pressed',picked.has(s));b.onclick=()=>{picked.has(s)?picked.delete(s):picked.add(s);renderSnacks()};$('snacks').appendChild(b)})}
 renderSnacks();
 async function login(provider){if(!supabase){status('loginstatus','Account connections are not configured yet. Add your Supabase project settings to enable secure sign-in.');return}status('loginstatus','Redirecting to '+(provider==='google'?'Google':'X')+'…');const {error}=await supabase.auth.signInWithOAuth({provider,options:{redirectTo:location.origin+'/account/'}});if(error)status('loginstatus',error.message)}
-$('google').onclick=()=>login('google');$('twitter').onclick=()=>login('twitter');
+$('google').onclick=()=>login('google');$('twitter').onclick=()=>login('x');
 async function getProfile(){const {data,error}=await supabase.from('profiles').select('*').eq('id',user.id).maybeSingle();if(error)throw error;profile=data;return data}
 async function refresh(){if(!supabase){show('welcome');return}try{const {data:{session},error}=await supabase.auth.getSession();if(error)throw error;user=session?.user||null;if(!user){show('welcome');return}await getProfile();if(profile?.onboarding_complete){renderProfile();show('profile')}else{populateForm();show('setup')}}catch(e){status('loginstatus',e.message);show('signin')}}
 function populateForm(){ $('name').value=profile?.display_name||user?.user_metadata?.full_name||user?.user_metadata?.name||'';$('handle').value=profile?.username||'';$('bio').value=profile?.bio||'';picked=new Set(profile?.favorite_snacks||[]);renderSnacks()}
@@ -18,7 +18,7 @@ async function renderReviews(){const parent=$('reviewlist');parent.className='em
 $('profileform').addEventListener('submit',async e=>{e.preventDefault();if(!user){status('savestatus','Please sign in first.');return}const username=$('handle').value.trim().toLowerCase();if(!/^[a-z0-9_]{3,24}$/.test(username)){status('savestatus','Username must be 3–24 letters, numbers or underscores.');return}const payload={id:user.id,username,display_name:$('name').value.trim(),bio:$('bio').value.trim(),favorite_snacks:[...picked],onboarding_complete:true};status('savestatus','Saving…');const {error}=await supabase.from('profiles').upsert(payload,{onConflict:'id'});if(error){status('savestatus',error.code==='23505'?'That username is already taken.':error.message);return}profile=payload;renderProfile();show('profile')});
 $('edit').onclick=()=>{populateForm();show('setup')};$('signout').onclick=async()=>{if(supabase){await supabase.auth.signOut();user=null;profile=null;show('welcome')}};
 async function link(provider){if(!supabase){status('profilestatus','Configure account providers first.');return}const {error}=await supabase.auth.linkIdentity({provider,options:{redirectTo:location.origin+'/account/'}});if(error)status('profilestatus',error.message)}
-$('linkx').onclick=()=>link('twitter');$('linkgoogle').onclick=()=>link('google');
+$('linkx').onclick=()=>link('x');$('linkgoogle').onclick=()=>link('google');
 // The welcome screen must work even when the auth library is unavailable.
 // Initialize the account backend only if public project settings exist.
 if(configured){
